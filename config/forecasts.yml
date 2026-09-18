@@ -1,0 +1,22 @@
+# Forecast configurations.
+# Each entry defines what to forecast; the forecast runner reads this file
+# and runs the listed models against the given mart table.
+
+forecasts:
+  demand_by_region:
+    source_table: marts.demand_weekly
+    target_column: total_packages
+    group_by: [region]
+    frequency: W
+    horizon: 12          # weeks ahead
+    models: [prophet, autoarima]
+    description: "12-week demand forecast by region"
+
+  capacity_utilization:
+    source_table: marts.capacity_daily
+    target_column: utilization_pct
+    group_by: [hub]
+    frequency: D
+    horizon: 30          # days ahead
+    models: [prophet]
+    description: "30-day capacity utilization forecast by hub"

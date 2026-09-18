@@ -1,0 +1,17 @@
+project:
+  title: "FedEx Capacity & Demand"
+  render:
+    - index.qmd
+    - capacity_overview.qmd
+    - demand_forecast.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    embed-resources: true   # self-contained HTML: shareable via email/Teams
+    page-layout: full
+
+execute:
+  echo: false
+  warning: false

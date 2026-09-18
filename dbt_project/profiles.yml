@@ -1,0 +1,9 @@
+fedex_capacity:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # Relative to the dbt_project/ directory (the Makefile cds here).
+      path: ../data/warehouse.duckdb
+      schema: main
+      threads: 4

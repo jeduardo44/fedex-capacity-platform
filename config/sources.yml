@@ -1,0 +1,33 @@
+# Data source definitions.
+# Adding a new source = add an entry here + drop files in data/raw/<name>/.
+# The ingest runner reads this file and routes each source to the right ingestor.
+
+sources:
+  weekly_demand:
+    type: excel
+    path: data/raw/weekly_demand/
+    file_pattern: "*.xlsx"
+    sheet: "Sheet1"
+    skip_rows: 0
+    key_columns: [region, week, product_category]
+    timestamp_column: week
+    description: "Weekly demand data exported from SAP"
+
+  fleet_capacity:
+    type: csv
+    path: data/raw/fleet_capacity/
+    file_pattern: "*.csv"
+    delimiter: ","
+    key_columns: [hub, date, vehicle_type]
+    timestamp_column: date
+    description: "Daily fleet capacity by hub"
+
+  # Template for future sources - copy, uncomment and fill in:
+  # new_source:
+  #   type: csv          # csv | excel | api
+  #   path: data/raw/new_source/
+  #   file_pattern: "*.csv"
+  #   delimiter: ","
+  #   key_columns: [id, date]
+  #   timestamp_column: date
+  #   description: "What this source is and where it comes from"

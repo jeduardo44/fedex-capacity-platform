@@ -1,0 +1,37 @@
+# Data (never versioned)
+data/raw/*
+data/processed/*
+data/*.duckdb
+data/*.duckdb.wal
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Dashboard output (shareable HTML, regenerated on demand)
+dashboards/output/*
+!dashboards/output/.gitkeep
+dashboards/.quarto/
+dashboards/*_files/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+logs/
+
+# Secrets & credentials
+.env
+*.json.key
+service_account*.json
+
+# OS
+.DS_Store
+dbt_project/.user.yml

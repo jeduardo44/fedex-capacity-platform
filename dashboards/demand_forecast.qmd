@@ -1,0 +1,78 @@
+---
+title: "Demand Forecast"
+subtitle: "12-week package demand forecast by region"
+---
+
+```{python}
+import duckdb
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+con = duckdb.connect("../data/warehouse.duckdb", read_only=True)
+actuals = con.execute("""
+    SELECT region, region_name, period_date, total_packages
+    FROM marts.demand_weekly ORDER BY period_date
+""").df()
+
+fc = con.execute("""
+    SELECT region, model, ds AS period_date, yhat AS packages_forecast
+    FROM forecasts.demand_by_region ORDER BY ds
+""").df()
+
+metrics = con.execute("""
+    SELECT region, model, round(mape, 1) AS mape_pct, round(rmse, 0) AS rmse
+    FROM forecasts.demand_by_region_metrics ORDER BY region, model
+""").df()
+con.close()
+
+regions = sorted(actuals["region"].unique())
+```
+
+## Backtest accuracy
+
+Holdout backtest on the last 12 weeks of history (lower is better):
+
+```{python}
+#| output: asis
+print(metrics.to_markdown(index=False))
+```
+
+## Actuals vs forecast by region
+
+::: {.panel-tabset}
+
+```{python}
+#| output: asis
+# Build one tab per region with a plotly chart each. plotly.js is inlined
+# with the first figure so the rendered HTML stays fully self-contained.
+# Figure HTML is emitted inside {=html} raw blocks: pandoc passes those
+# through verbatim (parsing megabytes of JS as markdown hangs the render).
+from plotly.io import to_html
+
+for i, region in enumerate(regions):
+    print(f"\n### {region}\n")
+    a = actuals[actuals["region"] == region]
+    f = fc[fc["region"] == region]
+
+    fig = go.Figure()
+    fig.add_scatter(
+        x=a["period_date"], y=a["total_packages"],
+        mode="lines", name="Actual",
+    )
+    for model, mf in f.groupby("model"):
+        fig.add_scatter(
+            x=mf["period_date"], y=mf["packages_forecast"],
+            mode="lines", line=dict(dash="dot"), name=f"Forecast ({model})",
+        )
+    fig.update_layout(
+        height=420, legend_title=None,
+        xaxis_title="Week", yaxis_title="Packages",
+    )
+    fig_html = to_html(
+        fig, include_plotlyjs="inline" if i == 0 else False, full_html=False
+    )
+    print("```{=html}\n" + fig_html + "\n```")
+```
+
+:::

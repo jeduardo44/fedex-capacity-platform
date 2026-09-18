@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: capacity_daily
+    description: >
+      Daily capacity and utilization per hub. Consumed by the capacity
+      dashboard and the capacity_utilization forecast (config/forecasts.yml).
+    columns:
+      - name: hub
+        tests: [not_null]
+      - name: period_date
+        tests: [not_null]
+      - name: utilization_pct
+        tests: [not_null]

@@ -1,0 +1,90 @@
+---
+title: "Capacity Overview"
+subtitle: "Daily fleet utilization by hub"
+---
+
+```{python}
+import duckdb
+import pandas as pd
+import plotly.express as px
+
+con = duckdb.connect("../data/warehouse.duckdb", read_only=True)
+daily = con.execute("""
+    SELECT hub, region, period_date, total_available, total_used, utilization_pct
+    FROM marts.capacity_daily
+    ORDER BY period_date
+""").df()
+
+fc = con.execute("""
+    SELECT hub, model, ds AS period_date, yhat AS utilization_forecast
+    FROM forecasts.capacity_utilization
+    ORDER BY ds
+""").df()
+con.close()
+```
+
+## Utilization by hub
+
+::: {.panel-tabset}
+
+### Trend
+
+```{python}
+fig = px.line(
+    daily, x="period_date", y="utilization_pct", color="hub",
+    labels={"period_date": "Date", "utilization_pct": "Utilization (%)", "hub": "Hub"},
+)
+fig.add_hline(y=90, line_dash="dash", line_color="red",
+              annotation_text="90% capacity threshold")
+fig.update_layout(height=450, legend_title=None)
+fig.show()
+```
+
+### Last 30 days
+
+```{python}
+recent = daily[daily["period_date"] >= daily["period_date"].max() - pd.Timedelta(days=30)]
+fig = px.line(
+    recent, x="period_date", y="utilization_pct", color="hub",
+    labels={"period_date": "Date", "utilization_pct": "Utilization (%)", "hub": "Hub"},
+)
+fig.add_hline(y=90, line_dash="dash", line_color="red")
+fig.update_layout(height=450, legend_title=None)
+fig.show()
+```
+
+### Available vs used
+
+```{python}
+agg = (
+    daily.groupby("hub", as_index=False)[["total_available", "total_used"]]
+    .mean()
+    .melt(id_vars="hub", var_name="metric", value_name="vehicles")
+)
+fig = px.bar(
+    agg, x="hub", y="vehicles", color="metric", barmode="group",
+    labels={"hub": "Hub", "vehicles": "Avg vehicles/day", "metric": ""},
+)
+fig.update_layout(height=420)
+fig.show()
+```
+
+:::
+
+## 30-day utilization forecast
+
+```{python}
+recent = daily[daily["period_date"] >= daily["period_date"].max() - pd.Timedelta(days=60)]
+fig = px.line(
+    recent, x="period_date", y="utilization_pct", color="hub",
+    labels={"period_date": "Date", "utilization_pct": "Utilization (%)", "hub": "Hub"},
+)
+for hub, hub_fc in fc.groupby("hub"):
+    fig.add_scatter(
+        x=hub_fc["period_date"], y=hub_fc["utilization_forecast"],
+        mode="lines", line=dict(dash="dot"), name=f"{hub} (forecast)",
+    )
+fig.add_hline(y=90, line_dash="dash", line_color="red")
+fig.update_layout(height=480, legend_title=None)
+fig.show()
+```

@@ -1,0 +1,27 @@
+name: fedex_capacity
+version: "1.0.0"
+profile: fedex_capacity
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+
+target-path: target
+clean-targets: [target, dbt_packages]
+
+models:
+  fedex_capacity:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  fedex_capacity:
+    +schema: seeds

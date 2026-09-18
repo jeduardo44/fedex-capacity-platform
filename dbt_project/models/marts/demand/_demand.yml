@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: demand_weekly
+    description: >
+      Weekly total demand per region. Consumed by the demand dashboard and
+      the demand_by_region forecast (config/forecasts.yml).
+    columns:
+      - name: region
+        tests: [not_null]
+      - name: period_date
+        description: "Monday of the demand week (mart time-column convention)."
+        tests: [not_null]
+      - name: total_packages
+        tests: [not_null]

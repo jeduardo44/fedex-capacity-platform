@@ -1,0 +1,71 @@
+---
+title: "Capacity & Demand — Overview"
+subtitle: "Local analytics platform · data refreshed on pipeline run"
+---
+
+```{python}
+import duckdb
+import pandas as pd
+
+con = duckdb.connect("../data/warehouse.duckdb", read_only=True)
+
+demand = con.execute("""
+    SELECT max(period_date) AS latest_week,
+           sum(total_packages) FILTER (
+               WHERE period_date = (SELECT max(period_date) FROM marts.demand_weekly)
+           ) AS latest_week_packages
+    FROM marts.demand_weekly
+""").df()
+
+capacity = con.execute("""
+    SELECT max(period_date) AS latest_day,
+           round(avg(utilization_pct) FILTER (
+               WHERE period_date >= (SELECT max(period_date) - INTERVAL 7 DAY
+                                     FROM marts.capacity_daily)
+           ), 1) AS avg_utilization_7d
+    FROM marts.capacity_daily
+""").df()
+con.close()
+```
+
+::: {.callout-note}
+This landing page summarizes the latest state of the warehouse. Use the
+detailed dashboards for drill-downs:
+[Capacity Overview](capacity_overview.html) · [Demand Forecast](demand_forecast.html)
+:::
+
+```{python}
+#| output: asis
+lw = demand["latest_week"].iloc[0]
+lwp = demand["latest_week_packages"].iloc[0]
+ld = capacity["latest_day"].iloc[0]
+util = capacity["avg_utilization_7d"].iloc[0]
+print(f"""
+| KPI | Value |
+|---|---|
+| Latest demand week | **{lw}** |
+| Packages in latest week (all regions) | **{lwp:,.0f}** |
+| Latest capacity date | **{ld}** |
+| Avg utilization, last 7 days | **{util}%** |
+""")
+```
+
+## Demand trend (all regions)
+
+```{python}
+import plotly.express as px
+
+con = duckdb.connect("../data/warehouse.duckdb", read_only=True)
+df = con.execute("""
+    SELECT period_date, region_name, total_packages
+    FROM marts.demand_weekly ORDER BY period_date
+""").df()
+con.close()
+
+fig = px.line(
+    df, x="period_date", y="total_packages", color="region_name",
+    labels={"period_date": "Week", "total_packages": "Packages", "region_name": "Region"},
+)
+fig.update_layout(height=420, legend_title=None)
+fig.show()
+```

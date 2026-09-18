@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_demand_weekly
+    description: >
+      Weekly demand aggregated across product categories, enriched with
+      region names from the region_mapping seed.
+    columns:
+      - name: region
+        tests: [not_null]
+      - name: week_date
+        tests: [not_null]
+      - name: total_packages
+        tests: [not_null]
+
+  - name: int_capacity_daily
+    description: >
+      Daily capacity aggregated across vehicle types per hub, with
+      utilization calculated as used / available.
+    columns:
+      - name: hub
+        tests: [not_null]
+      - name: capacity_date
+        tests: [not_null]
+      - name: utilization_pct
+        tests: [not_null]

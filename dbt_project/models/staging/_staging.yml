@@ -1,0 +1,49 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Tables loaded by the Python ingest layer (src/ingest)."
+    schema: raw
+    tables:
+      - name: weekly_demand
+        description: "Weekly demand data exported from SAP, one row per region/week/product."
+      - name: fleet_capacity
+        description: "Daily fleet capacity by hub and vehicle type."
+
+models:
+  - name: stg_weekly_demand
+    description: "1:1 with raw.weekly_demand - renamed and typed columns only."
+    columns:
+      - name: region
+        description: "Region code."
+        tests: [not_null]
+      - name: week_date
+        description: "Monday of the demand week."
+        tests: [not_null]
+      - name: product_category
+        description: "Product category (express, ground, freight)."
+        tests: [not_null]
+      - name: packages
+        description: "Number of packages for the region/week/category."
+        tests: [not_null]
+
+  - name: stg_fleet_capacity
+    description: "1:1 with raw.fleet_capacity - renamed and typed columns only."
+    columns:
+      - name: hub
+        description: "Hub code."
+        tests: [not_null]
+      - name: capacity_date
+        description: "Calendar date of the capacity snapshot."
+        tests: [not_null]
+      - name: vehicle_type
+        description: "Vehicle class."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["van", "truck", "trailer"]
+      - name: vehicles_available
+        tests: [not_null]
+      - name: vehicles_used
+        tests: [not_null]
